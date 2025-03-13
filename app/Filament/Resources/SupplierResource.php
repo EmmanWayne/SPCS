@@ -35,33 +35,33 @@ class SupplierResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
-                                    ->label(__('filament-panels::fields.name'))
+                                    ->label('Nombre')
                                     ->required()
                                     ->maxLength(255),
 
                                 Forms\Components\TextInput::make('email')
-                                    ->label(__('filament-panels::fields.email'))
+                                    ->label('Correo Electrónico')
                                     ->email()
                                     ->required()
                                     ->maxLength(255),
 
                                 Forms\Components\TextInput::make('phone')
-                                    ->label(__('filament-panels::fields.phone'))
+                                    ->label('Teléfono')
                                     ->tel()
                                     ->maxLength(255),
 
                                 Forms\Components\TextInput::make('tax_id')
-                                    ->label(__('filament-panels::fields.tax_id'))
+                                    ->label('RFC')
                                     ->maxLength(255),
                             ]),
 
                         Forms\Components\TextInput::make('address')
-                            ->label(__('filament-panels::fields.address'))
+                            ->label('Dirección')
                             ->columnSpan('full')
                             ->maxLength(255),
 
                         Forms\Components\Textarea::make('notes')
-                            ->label(__('filament-panels::fields.notes'))
+                            ->label('Notas')
                             ->columnSpan('full')
                             ->maxLength(65535),
                     ])
@@ -73,19 +73,19 @@ class SupplierResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label(__('filament-panels::fields.name'))
+                    ->label('Nombre')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('email')
-                    ->label(__('filament-panels::fields.email'))
+                    ->label('Correo Electrónico')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('phone')
-                    ->label(__('filament-panels::fields.phone')),
+                    ->label('Teléfono'),
 
                 Tables\Columns\TextColumn::make('tax_id')
-                    ->label(__('filament-panels::fields.tax_id')),
+                    ->label('RFC'),
 
                 Tables\Columns\TextColumn::make('purchases_count')
                     ->label('Total Compras')

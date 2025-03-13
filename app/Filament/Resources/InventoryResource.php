@@ -32,18 +32,18 @@ class InventoryResource extends Resource
                 Forms\Components\Card::make()
                     ->schema([
                         Forms\Components\Select::make('product_id')
-                            ->label(__('filament-panels::fields.product_id'))
+                            ->label('Producto')
                             ->relationship('product', 'name')
                             ->required()
                             ->searchable(),
 
                         Forms\Components\TextInput::make('quantity')
-                            ->label(__('filament-panels::fields.quantity'))
+                            ->label('Cantidad')
                             ->numeric()
                             ->required(),
 
                         Forms\Components\TextInput::make('minimum_stock')
-                            ->label(__('filament-panels::fields.minimum_stock'))
+                            ->label('Stock Mínimo')
                             ->numeric()
                             ->required(),
                     ])->columns(2)
@@ -55,21 +55,21 @@ class InventoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label(__('filament-panels::fields.product_id'))
+                    ->label('Producto')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('quantity')
-                    ->label(__('filament-panels::fields.quantity'))
+                    ->label('Cantidad')
                     ->numeric()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('minimum_stock')
-                    ->label(__('filament-panels::fields.minimum_stock'))
+                    ->label('Stock Mínimo')
                     ->numeric()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
-                    ->label(__('filament-panels::fields.status'))
+                    ->label('Estado')
                     ->badge()
                     ->color(fn ($record): string => 
                         $record->quantity <= $record->minimum_stock ? 'danger' : 'success'
@@ -80,7 +80,7 @@ class InventoryResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label(__('filament-panels::fields.status'))
+                    ->label('Estado')
                     ->options([
                         'low' => 'Stock Bajo',
                         'normal' => 'Stock Normal',

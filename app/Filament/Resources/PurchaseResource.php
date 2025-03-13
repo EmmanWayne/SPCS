@@ -35,26 +35,26 @@ class PurchaseResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('reference_number')
-                                    ->label(__('filament-panels::fields.reference_number'))
+                                    ->label('Número de Referencia')
                                     ->required()
                                     ->unique(ignoreRecord: true)
                                     ->default('COMP-' . str_pad(random_int(1, 9999), 4, '0', STR_PAD_LEFT))
                                     ->maxLength(255),
 
                                 Forms\Components\Select::make('supplier_id')
-                                    ->label(__('filament-panels::fields.supplier_id'))
+                                    ->label('Proveedor')
                                     ->relationship('supplier', 'name')
                                     ->required()
                                     ->searchable()
                                     ->preload(),
 
                                 Forms\Components\DatePicker::make('purchase_date')
-                                    ->label(__('filament-panels::fields.purchase_date'))
+                                    ->label('Fecha de Compra')
                                     ->required()
                                     ->default(now()),
 
                                 Forms\Components\Select::make('status')
-                                    ->label(__('filament-panels::fields.status'))
+                                    ->label('Estado')
                                     ->options([
                                         'pending' => 'Pendiente',
                                         'processing' => 'En Proceso',
@@ -71,7 +71,7 @@ class PurchaseResource extends Resource
                                     ->relationship()
                                     ->schema([
                                         Forms\Components\Select::make('product_id')
-                                            ->label(__('filament-panels::fields.product_id'))
+                                            ->label('Producto')
                                             ->options(Product::query()->pluck('name', 'id'))
                                             ->required()
                                             ->reactive()
@@ -84,7 +84,7 @@ class PurchaseResource extends Resource
                                             ->searchable(),
 
                                         Forms\Components\TextInput::make('quantity')
-                                            ->label(__('filament-panels::fields.quantity'))
+                                            ->label('Cantidad')
                                             ->numeric()
                                             ->default(1)
                                             ->required()
@@ -94,7 +94,7 @@ class PurchaseResource extends Resource
                                             }),
 
                                         Forms\Components\TextInput::make('unit_price')
-                                            ->label(__('filament-panels::fields.unit_price'))
+                                            ->label('Precio Unitario')
                                             ->numeric()
                                             ->required()
                                             ->reactive()
@@ -104,7 +104,7 @@ class PurchaseResource extends Resource
                                             }),
 
                                         Forms\Components\TextInput::make('total_price')
-                                            ->label(__('filament-panels::fields.total_price'))
+                                            ->label('Precio Total')
                                             ->numeric()
                                             ->disabled()
                                             ->prefix('$')
@@ -114,7 +114,7 @@ class PurchaseResource extends Resource
                             ]),
 
                         Forms\Components\Textarea::make('notes')
-                            ->label(__('filament-panels::fields.notes'))
+                            ->label('Notas')
                             ->columnSpan('full'),
                     ])
             ]);
@@ -125,21 +125,21 @@ class PurchaseResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('reference_number')
-                    ->label(__('filament-panels::fields.reference_number'))
+                    ->label('Número de Referencia')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('supplier.name')
-                    ->label(__('filament-panels::fields.supplier_id'))
+                    ->label('Proveedor')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('purchase_date')
-                    ->label(__('filament-panels::fields.purchase_date'))
+                    ->label('Fecha de Compra')
                     ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
-                    ->label(__('filament-panels::fields.status'))
+                    ->label('Estado')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -150,7 +150,7 @@ class PurchaseResource extends Resource
                     }),
 
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->label(__('filament-panels::fields.total_amount'))
+                    ->label('Monto Total')
                     ->money('MXN')
                     ->sortable(),
 

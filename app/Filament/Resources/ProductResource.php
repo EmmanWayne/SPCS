@@ -35,18 +35,18 @@ class ProductResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
-                                    ->label(__('filament-panels::fields.name'))
+                                    ->label('Nombre')
                                     ->required()
                                     ->maxLength(255),
 
                                 Forms\Components\TextInput::make('code')
-                                    ->label(__('filament-panels::fields.code'))
+                                    ->label('Código')
                                     ->required()
                                     ->unique(ignoreRecord: true)
                                     ->maxLength(255),
 
                                 Forms\Components\Select::make('category')
-                                    ->label(__('filament-panels::fields.category'))
+                                    ->label('Categoría')
                                     ->options([
                                         'organic' => 'Orgánico',
                                         'gourmet' => 'Gourmet',
@@ -56,7 +56,7 @@ class ProductResource extends Resource
                                     ->required(),
 
                                 Forms\Components\Select::make('roast_level')
-                                    ->label(__('filament-panels::fields.roast_level'))
+                                    ->label('Nivel de Tostado')
                                     ->options([
                                         'light' => 'Ligero',
                                         'medium' => 'Medio',
@@ -65,36 +65,36 @@ class ProductResource extends Resource
                                     ]),
 
                                 Forms\Components\TextInput::make('origin')
-                                    ->label(__('filament-panels::fields.origin')),
+                                    ->label('Origen'),
 
                                 Forms\Components\TextInput::make('purchase_price')
-                                    ->label(__('filament-panels::fields.purchase_price'))
+                                    ->label('Precio de Compra')
                                     ->numeric()
                                     ->required()
                                     ->prefix('$'),
 
                                 Forms\Components\TextInput::make('sale_price')
-                                    ->label(__('filament-panels::fields.sale_price'))
+                                    ->label('Precio de Venta')
                                     ->numeric()
                                     ->required()
                                     ->prefix('$'),
                             ]),
 
                         Forms\Components\Textarea::make('description')
-                            ->label(__('filament-panels::fields.description'))
+                            ->label('Descripción')
                             ->columnSpan('full'),
 
                         // Sección de Inventario
                         Forms\Components\Section::make('Inventario')
                             ->schema([
                                 Forms\Components\TextInput::make('inventory.quantity')
-                                    ->label(__('filament-panels::fields.quantity'))
+                                    ->label('Cantidad')
                                     ->numeric()
                                     ->required()
                                     ->default(0),
 
                                 Forms\Components\TextInput::make('inventory.minimum_stock')
-                                    ->label(__('filament-panels::fields.minimum_stock'))
+                                    ->label('Stock Mínimo')
                                     ->numeric()
                                     ->required()
                                     ->default(0),
@@ -109,21 +109,21 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('code')
-                    ->label(__('filament-panels::fields.code'))
+                    ->label('Código')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('name')
-                    ->label(__('filament-panels::fields.name'))
+                    ->label('Nombre')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('category')
-                    ->label(__('filament-panels::fields.category'))
+                    ->label('Categoría')
                     ->badge(),
 
                 Tables\Columns\TextColumn::make('inventory.quantity')
-                    ->label(__('filament-panels::fields.quantity'))
+                    ->label('Cantidad')
                     ->numeric()
                     ->sortable()
                     ->color(fn ($record): string => 
@@ -133,18 +133,18 @@ class ProductResource extends Resource
                     ),
 
                 Tables\Columns\TextColumn::make('purchase_price')
-                    ->label(__('filament-panels::fields.purchase_price'))
+                    ->label('Precio de Compra')
                     ->money('MXN')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('sale_price')
-                    ->label(__('filament-panels::fields.sale_price'))
+                    ->label('Precio de Venta')
                     ->money('MXN')
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('category')
-                    ->label(__('filament-panels::fields.category'))
+                    ->label('Categoría')
                     ->options([
                         'organic' => 'Orgánico',
                         'gourmet' => 'Gourmet',

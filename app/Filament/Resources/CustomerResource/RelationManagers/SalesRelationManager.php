@@ -32,16 +32,16 @@ class SalesRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('reference_number')
-                    ->label(__('filament-panels::fields.reference_number'))
+                    ->label('Número de Referencia')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('sale_date')
-                    ->label(__('filament-panels::fields.sale_date'))
+                    ->label('Fecha de Venta')
                     ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
-                    ->label(__('filament-panels::fields.status'))
+                    ->label('Estado')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -52,7 +52,7 @@ class SalesRelationManager extends RelationManager
                     }),
 
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->label(__('filament-panels::fields.total_amount'))
+                    ->label('Monto Total')
                     ->money('MXN')
                     ->sortable(),
             ])

@@ -37,26 +37,26 @@ class SaleResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('reference_number')
-                                    ->label(__('filament-panels::fields.reference_number'))
+                                    ->label('Número de Referencia')
                                     ->required()
                                     ->unique(ignoreRecord: true)
                                     ->default('VENT-' . str_pad(random_int(1, 9999), 4, '0', STR_PAD_LEFT))
                                     ->maxLength(255),
 
                                 Forms\Components\Select::make('customer_id')
-                                    ->label(__('filament-panels::fields.customer_id'))
+                                    ->label('Cliente')
                                     ->relationship('customer', 'name')
                                     ->required()
                                     ->searchable()
                                     ->preload(),
 
                                 Forms\Components\DatePicker::make('sale_date')
-                                    ->label(__('filament-panels::fields.sale_date'))
+                                    ->label('Fecha de Venta')
                                     ->required()
                                     ->default(now()),
 
                                 Forms\Components\Select::make('status')
-                                    ->label(__('filament-panels::fields.status'))
+                                    ->label('Estado')
                                     ->options([
                                         'pending' => 'Pendiente',
                                         'processing' => 'En Proceso',
@@ -64,19 +64,7 @@ class SaleResource extends Resource
                                         'cancelled' => 'Cancelado',
                                     ])
                                     ->required()
-                                    ->default('pending')
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, $record) {
-                                        if ($record && $state === 'completed') {
-                                            // Actualizar inventario al completar la venta
-                                            foreach ($record->items as $item) {
-                                                $inventory = Inventory::where('product_id', $item->product_id)->first();
-                                                if ($inventory) {
-                                                    $inventory->decrement('quantity', $item->quantity);
-                                                }
-                                            }
-                                        }
-                                    }),
+                                    ->default('pending'),
                             ]),
 
                         Forms\Components\Section::make('Productos')
@@ -85,52 +73,28 @@ class SaleResource extends Resource
                                     ->relationship()
                                     ->schema([
                                         Forms\Components\Select::make('product_id')
-                                            ->label(__('filament-panels::fields.product_id'))
+                                            ->label('Producto')
                                             ->options(Product::query()->pluck('name', 'id'))
                                             ->required()
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set) {
-                                                if ($state) {
-                                                    $product = Product::find($state);
-                                                    $set('unit_price', $product->sale_price);
-                                                }
-                                            })
                                             ->searchable(),
 
                                         Forms\Components\TextInput::make('quantity')
-                                            ->label(__('filament-panels::fields.quantity'))
+                                            ->label('Cantidad')
                                             ->numeric()
                                             ->default(1)
                                             ->required()
-                                            ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                if ($state && $get('product_id')) {
-                                                    $inventory = Inventory::where('product_id', $get('product_id'))->first();
-                                                    if ($inventory && $state > $inventory->quantity) {
-                                                        Notification::make()
-                                                            ->warning()
-                                                            ->title('Stock insuficiente')
-                                                            ->body("Solo hay {$inventory->quantity} unidades disponibles.")
-                                                            ->send();
-                                                        $set('quantity', $inventory->quantity);
-                                                        $state = $inventory->quantity;
-                                                    }
-                                                }
-                                                $set('total_price', $state * $get('unit_price'));
-                                            }),
+                                            ->reactive(),
 
                                         Forms\Components\TextInput::make('unit_price')
-                                            ->label(__('filament-panels::fields.unit_price'))
+                                            ->label('Precio Unitario')
                                             ->numeric()
                                             ->required()
                                             ->reactive()
-                                            ->prefix('$')
-                                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                $set('total_price', $state * $get('quantity'));
-                                            }),
+                                            ->prefix('$'),
 
                                         Forms\Components\TextInput::make('total_price')
-                                            ->label(__('filament-panels::fields.total_price'))
+                                            ->label('Precio Total')
                                             ->numeric()
                                             ->disabled()
                                             ->prefix('$')
@@ -140,20 +104,13 @@ class SaleResource extends Resource
                                             ->label('Stock Disponible')
                                             ->disabled()
                                             ->dehydrated(false)
-                                            ->reactive()
-                                            ->afterStateHydrated(function ($component, $state, $get) {
-                                                $productId = $get('product_id');
-                                                if ($productId) {
-                                                    $inventory = Inventory::where('product_id', $productId)->first();
-                                                    $component->state($inventory ? $inventory->quantity : 0);
-                                                }
-                                            }),
+                                            ->reactive(),
                                     ])
                                     ->columns(5),
                             ]),
 
                         Forms\Components\Textarea::make('notes')
-                            ->label(__('filament-panels::fields.notes'))
+                            ->label('Notas')
                             ->columnSpan('full'),
                     ])
             ]);
@@ -164,21 +121,21 @@ class SaleResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('reference_number')
-                    ->label(__('filament-panels::fields.reference_number'))
+                    ->label('Número de Referencia')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('customer.name')
-                    ->label(__('filament-panels::fields.customer_id'))
+                    ->label('Cliente')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('sale_date')
-                    ->label(__('filament-panels::fields.sale_date'))
+                    ->label('Fecha de Venta')
                     ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
-                    ->label(__('filament-panels::fields.status'))
+                    ->label('Estado')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -189,7 +146,7 @@ class SaleResource extends Resource
                     }),
 
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->label(__('filament-panels::fields.total_amount'))
+                    ->label('Monto Total')
                     ->money('MXN')
                     ->sortable(),
 
