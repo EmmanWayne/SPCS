@@ -16,5 +16,15 @@ return [
     'email' => 'El campo :attribute debe ser una dirección de correo válida.',
     'numeric' => 'El campo :attribute debe ser un número.',
     'string' => 'El campo :attribute debe ser una cadena de texto.',
+    'date' => 'El campo :attribute debe ser una fecha válida.',
+    'unique' => 'El valor del campo :attribute ya está en uso.',
+    'min' => [
+        'numeric' => 'El campo :attribute debe ser al menos :min.',
+        'string' => 'El campo :attribute debe tener al menos :min caracteres.',
+    ],
+    'max' => [
+        'numeric' => 'El campo :attribute no debe ser mayor que :max.',
+        'string' => 'El campo :attribute no debe tener más de :max caracteres.',
+    ],
     // ... puedes agregar más validaciones según necesites
 ];

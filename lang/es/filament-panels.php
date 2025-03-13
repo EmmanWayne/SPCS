@@ -1,21 +1,6 @@
 <?php
 
 return [
-    'pages' => [
-        'dashboard' => [
-            'title' => 'Panel de Control',
-        ],
-    ],
-
-    'resources' => [
-        'label.product' => 'Producto|Productos',
-        'label.supplier' => 'Proveedor|Proveedores',
-        'label.customer' => 'Cliente|Clientes',
-        'label.purchase' => 'Compra|Compras',
-        'label.sale' => 'Venta|Ventas',
-        'label.inventory' => 'Inventario|Inventarios',
-    ],
-
     'fields' => [
         'name' => 'Nombre',
         'code' => 'Código',
@@ -40,6 +25,35 @@ return [
         'quantity' => 'Cantidad',
         'minimum_stock' => 'Stock Mínimo',
         'product_id' => 'Producto',
+        'unit_price' => 'Precio Unitario',
+        'total_price' => 'Precio Total',
+    ],
+
+    'resources' => [
+        'product' => [
+            'label' => 'Producto',
+            'plural_label' => 'Productos',
+        ],
+        'supplier' => [
+            'label' => 'Proveedor',
+            'plural_label' => 'Proveedores',
+        ],
+        'customer' => [
+            'label' => 'Cliente',
+            'plural_label' => 'Clientes',
+        ],
+        'purchase' => [
+            'label' => 'Compra',
+            'plural_label' => 'Compras',
+        ],
+        'sale' => [
+            'label' => 'Venta',
+            'plural_label' => 'Ventas',
+        ],
+        'inventory' => [
+            'label' => 'Inventario',
+            'plural_label' => 'Inventarios',
+        ],
     ],
 
     'navigation' => [
@@ -50,15 +64,32 @@ return [
         ],
     ],
 
+    'table' => [
+        'columns' => [
+            'name' => 'Nombre',
+            'email' => 'Correo',
+            'phone' => 'Teléfono',
+            'status' => 'Estado',
+            'total' => 'Total',
+            'date' => 'Fecha',
+        ],
+    ],
+
+    'form' => [
+        'sections' => [
+            'products' => 'Productos',
+            'customer_info' => 'Información del Cliente',
+            'supplier_info' => 'Información del Proveedor',
+            'transaction_details' => 'Detalles de la Transacción',
+        ],
+    ],
+
     'actions' => [
         'create' => 'Crear',
         'edit' => 'Editar',
-        'view' => 'Ver',
         'delete' => 'Eliminar',
         'save' => 'Guardar',
         'cancel' => 'Cancelar',
-        'confirm' => 'Confirmar',
-        'back' => 'Volver',
     ],
 
     'messages' => [
@@ -66,14 +97,12 @@ return [
         'updated' => 'Registro actualizado exitosamente',
         'deleted' => 'Registro eliminado exitosamente',
         'delete_confirmation' => '¿Está seguro que desea eliminar este registro?',
-        'delete_selected_confirmation' => '¿Está seguro que desea eliminar los registros seleccionados?',
-        'no_records' => 'No hay registros para mostrar',
     ],
 
-    'buttons' => [
-        'create_new' => 'Crear nuevo',
-        'filters' => 'Filtros',
-        'search' => 'Buscar',
-        'bulk_actions' => 'Acciones masivas',
+    'status_options' => [
+        'pending' => 'Pendiente',
+        'processing' => 'En Proceso',
+        'completed' => 'Completado',
+        'cancelled' => 'Cancelado',
     ],
 ];
