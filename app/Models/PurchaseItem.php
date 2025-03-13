@@ -15,6 +15,12 @@ class PurchaseItem extends Model
         'total_price',
     ];
 
+    protected $casts = [
+        'quantity' => 'decimal:2',
+        'unit_price' => 'decimal:2',
+        'total_price' => 'decimal:2',
+    ];
+
     public function purchase(): BelongsTo
     {
         return $this->belongsTo(Purchase::class);
@@ -23,5 +29,14 @@ class PurchaseItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($item) {
+            $item->total_price = $item->quantity * $item->unit_price;
+        });
     }
 }

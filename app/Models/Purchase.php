@@ -11,14 +11,15 @@ class Purchase extends Model
     protected $fillable = [
         'reference_number',
         'supplier_id',
-        'total_amount',
-        'status',
         'purchase_date',
+        'status',
         'notes',
+        'total_amount',
     ];
 
     protected $casts = [
-        'purchase_date' => 'date',
+        'purchase_date' => 'datetime',
+        'total_amount' => 'decimal:2',
     ];
 
     public function supplier(): BelongsTo
@@ -29,5 +30,16 @@ class Purchase extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($purchase) {
+            if (!isset($purchase->total_amount)) {
+                $purchase->total_amount = 0;
+            }
+        });
     }
 }

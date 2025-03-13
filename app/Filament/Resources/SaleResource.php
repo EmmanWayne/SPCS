@@ -15,59 +15,54 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
+use Closure;
+use App\Helpers\NumberFormatter;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 
 class SaleResource extends Resource
 {
     protected static ?string $model = Sale::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     
-    protected static ?string $navigationGroup = 'Operaciones';
+    protected static ?string $navigationGroup = 'Transacciones';
     
     protected static ?string $modelLabel = 'venta';
     
     protected static ?string $pluralModelLabel = 'ventas';
 
-    public static function form(Forms\Form $form): Forms\Form
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Card::make()
                     ->schema([
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\TextInput::make('reference_number')
                                     ->label('Número de Referencia')
+                                    ->default('VENT-' . random_int(1000, 9999))
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->default('VENT-' . str_pad(random_int(1, 9999), 4, '0', STR_PAD_LEFT))
-                                    ->maxLength(255),
+                                    ->columnSpan(1),
 
                                 Forms\Components\Select::make('customer_id')
                                     ->label('Cliente')
                                     ->relationship('customer', 'name')
                                     ->required()
                                     ->searchable()
-                                    ->preload(),
+                                    ->columnSpan(1),
 
                                 Forms\Components\DatePicker::make('sale_date')
                                     ->label('Fecha de Venta')
                                     ->required()
-                                    ->default(now()),
-
-                                Forms\Components\Select::make('status')
-                                    ->label('Estado')
-                                    ->options([
-                                        'pending' => 'Pendiente',
-                                        'processing' => 'En Proceso',
-                                        'completed' => 'Completado',
-                                        'cancelled' => 'Cancelado',
-                                    ])
-                                    ->required()
-                                    ->default('pending'),
+                                    ->default(now())
+                                    ->columnSpan(1),
                             ]),
 
-                        Forms\Components\Section::make('Productos')
+                        Forms\Components\Section::make('Detalles de la Venta')
                             ->schema([
                                 Forms\Components\Repeater::make('items')
                                     ->relationship()
@@ -77,61 +72,140 @@ class SaleResource extends Resource
                                             ->options(Product::query()->pluck('name', 'id'))
                                             ->required()
                                             ->reactive()
-                                            ->searchable(),
+                                            ->afterStateUpdated(function ($state, Set $set) {
+                                                if ($state) {
+                                                    $product = Product::find($state);
+                                                    $set('unit_price', $product->sale_price);
+                                                    
+                                                    // Obtener y mostrar el stock disponible
+                                                    $inventory = Inventory::where('product_id', $state)->first();
+                                                    $set('available_stock', $inventory ? $inventory->quantity : 0);
+                                                }
+                                            })
+                                            ->columnSpan(2),
 
-                                        Forms\Components\TextInput::make('quantity')
-                                            ->label('Cantidad')
+                                        Forms\Components\TextInput::make('available_stock')
+                                            ->label('Stock Disponible')
+                                            ->disabled()
                                             ->numeric()
-                                            ->default(1)
-                                            ->required()
-                                            ->reactive(),
+                                            ->columnSpan(1),
 
                                         Forms\Components\TextInput::make('unit_price')
                                             ->label('Precio Unitario')
                                             ->numeric()
                                             ->required()
                                             ->reactive()
-                                            ->prefix('$'),
+                                            ->prefix('L')
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if ($state && $get('quantity')) {
+                                                    $set('total_price', floatval($state) * floatval($get('quantity')));
+                                                }
+                                            })
+                                            ->columnSpan(1),
+
+                                        Forms\Components\TextInput::make('quantity')
+                                            ->label('Cantidad')
+                                            ->numeric()
+                                            ->default(1)
+                                            ->required()
+                                            ->reactive()
+                                            ->rules([
+                                                function (Get $get) {
+                                                    return function (string $attribute, $value, $fail) use ($get) {
+                                                        $productId = $get('product_id');
+                                                        if ($productId) {
+                                                            $inventory = Inventory::where('product_id', $productId)->first();
+                                                            if ($inventory && $value > $inventory->quantity) {
+                                                                $fail("La cantidad excede el stock disponible ({$inventory->quantity})");
+                                                            }
+                                                        }
+                                                    };
+                                                }
+                                            ])
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if ($state && $get('unit_price')) {
+                                                    $set('total_price', floatval($state) * floatval($get('unit_price')));
+                                                }
+                                            })
+                                            ->columnSpan(1),
 
                                         Forms\Components\TextInput::make('total_price')
-                                            ->label('Precio Total')
+                                            ->label('Total')
+                                            ->disabled()
                                             ->numeric()
-                                            ->disabled()
-                                            ->prefix('$')
-                                            ->dehydrated(),
-
-                                        Forms\Components\TextInput::make('stock_available')
-                                            ->label('Stock Disponible')
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->reactive(),
+                                            ->prefix('L')
+                                            ->columnSpan(1),
                                     ])
-                                    ->columns(5),
+                                    ->columns(6)
+                                    ->defaultItems(1)
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Set $set) {
+                                        $totalAmount = collect($state ?? [])->sum('total_price');
+                                        $set('total_amount', $totalAmount);
+                                    }),
+                            ]),
+
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('status')
+                                    ->label('Estado')
+                                    ->options([
+                                        'pending' => 'Pendiente',
+                                        'completed' => 'Completado',
+                                        'cancelled' => 'Cancelado',
+                                    ])
+                                    ->default('pending')
+                                    ->required(),
+
+                                Forms\Components\TextInput::make('total_amount')
+                                    ->label('Total General')
+                                    ->disabled()
+                                    ->numeric()
+                                    ->prefix('L'),
                             ]),
 
                         Forms\Components\Textarea::make('notes')
                             ->label('Notas')
-                            ->columnSpan('full'),
-                    ])
+                            ->rows(3),
+                    ]),
             ]);
     }
 
-    public static function table(Tables\Table $table): Tables\Table
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $totalAmount = 0;
+        if (isset($data['items'])) {
+            foreach ($data['items'] as &$item) {
+                $item['total_price'] = floatval($item['quantity']) * floatval($item['unit_price']);
+                $totalAmount += $item['total_price'];
+            }
+        }
+        $data['total_amount'] = $totalAmount;
+        return $data;
+    }
+
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('reference_number')
-                    ->label('Número de Referencia')
+                    ->label('Referencia')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('customer.name')
                     ->label('Cliente')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('sale_date')
-                    ->label('Fecha de Venta')
+                    ->label('Fecha')
                     ->date()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->label('Total')
+                    ->formatStateUsing(fn ($state) => NumberFormatter::formatLempiras($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
@@ -139,33 +213,23 @@ class SaleResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
-                        'processing' => 'info',
                         'completed' => 'success',
                         'cancelled' => 'danger',
-                        default => 'secondary',
-                    }),
-
-                Tables\Columns\TextColumn::make('total_amount')
-                    ->label('Monto Total')
-                    ->money('MXN')
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('items_count')
-                    ->label('Productos')
-                    ->counts('items'),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
                         'pending' => 'Pendiente',
-                        'processing' => 'En Proceso',
                         'completed' => 'Completado',
                         'cancelled' => 'Cancelado',
-                    ]),
+                        default => $state,
+                    }),
+            ])
+            ->filters([
+                //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

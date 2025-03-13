@@ -13,6 +13,14 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Date;
+use App\Helpers\NumberFormatter;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
+use App\Models\Supplier;
 
 class PurchaseResource extends Resource
 {
@@ -20,52 +28,50 @@ class PurchaseResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
     
-    protected static ?string $navigationGroup = 'Operaciones';
+    protected static ?string $navigationGroup = 'Transacciones';
     
     protected static ?string $modelLabel = 'compra';
     
     protected static ?string $pluralModelLabel = 'compras';
 
-    public static function form(Forms\Form $form): Forms\Form
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Card::make()
                     ->schema([
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\TextInput::make('reference_number')
                                     ->label('Número de Referencia')
+                                    ->default('COMP-' . random_int(1000, 9999))
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->default('COMP-' . str_pad(random_int(1, 9999), 4, '0', STR_PAD_LEFT))
-                                    ->maxLength(255),
+                                    ->columnSpan(1),
 
                                 Forms\Components\Select::make('supplier_id')
                                     ->label('Proveedor')
-                                    ->relationship('supplier', 'name')
+                                    ->options(function () {
+                                        return Supplier::query()
+                                            ->orderBy('name')
+                                            ->get()
+                                            ->mapWithKeys(fn ($supplier) => [
+                                                $supplier->id => "{$supplier->name} - {$supplier->rtn}"
+                                            ]);
+                                    })
+                                    ->searchable(['name', 'rtn'])
+                                    ->preload()
                                     ->required()
-                                    ->searchable()
-                                    ->preload(),
+                                    ->columnSpan(1),
 
                                 Forms\Components\DatePicker::make('purchase_date')
                                     ->label('Fecha de Compra')
                                     ->required()
-                                    ->default(now()),
-
-                                Forms\Components\Select::make('status')
-                                    ->label('Estado')
-                                    ->options([
-                                        'pending' => 'Pendiente',
-                                        'processing' => 'En Proceso',
-                                        'completed' => 'Completado',
-                                        'cancelled' => 'Cancelado',
-                                    ])
-                                    ->required()
-                                    ->default('pending'),
+                                    ->default(now())
+                                    ->columnSpan(1),
                             ]),
 
-                        Forms\Components\Section::make('Productos')
+                        Forms\Components\Section::make('Detalles de la Compra')
                             ->schema([
                                 Forms\Components\Repeater::make('items')
                                     ->relationship()
@@ -75,13 +81,26 @@ class PurchaseResource extends Resource
                                             ->options(Product::query()->pluck('name', 'id'))
                                             ->required()
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set) {
+                                            ->afterStateUpdated(function ($state, Set $set) {
                                                 if ($state) {
                                                     $product = Product::find($state);
                                                     $set('unit_price', $product->purchase_price);
                                                 }
                                             })
-                                            ->searchable(),
+                                            ->columnSpan(2),
+
+                                        Forms\Components\TextInput::make('unit_price')
+                                            ->label('Precio Unitario')
+                                            ->numeric()
+                                            ->required()
+                                            ->reactive()
+                                            ->prefix('L')
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if ($state && $get('quantity')) {
+                                                    $set('total_price', floatval($state) * floatval($get('quantity')));
+                                                }
+                                            })
+                                            ->columnSpan(1),
 
                                         Forms\Components\TextInput::make('quantity')
                                             ->label('Cantidad')
@@ -89,74 +108,94 @@ class PurchaseResource extends Resource
                                             ->default(1)
                                             ->required()
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                $set('total_price', $state * $get('unit_price'));
-                                            }),
-
-                                        Forms\Components\TextInput::make('unit_price')
-                                            ->label('Precio Unitario')
-                                            ->numeric()
-                                            ->required()
-                                            ->reactive()
-                                            ->prefix('$')
-                                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                $set('total_price', $state * $get('quantity'));
-                                            }),
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if ($state && $get('unit_price')) {
+                                                    $set('total_price', floatval($state) * floatval($get('unit_price')));
+                                                }
+                                            })
+                                            ->columnSpan(1),
 
                                         Forms\Components\TextInput::make('total_price')
-                                            ->label('Precio Total')
-                                            ->numeric()
+                                            ->label('Total')
                                             ->disabled()
-                                            ->prefix('$')
-                                            ->dehydrated(),
+                                            ->numeric()
+                                            ->prefix('L')
+                                            ->columnSpan(1),
                                     ])
-                                    ->columns(4),
+                                    ->columns(5)
+                                    ->defaultItems(1)
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Set $set) {
+                                        $totalAmount = collect($state ?? [])->sum('total_price');
+                                        $set('total_amount', $totalAmount);
+                                    }),
+                            ]),
+
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('status')
+                                    ->label('Estado')
+                                    ->options([
+                                        'pending' => 'Pendiente',
+                                        'completed' => 'Completado',
+                                        'cancelled' => 'Cancelado',
+                                    ])
+                                    ->default('pending')
+                                    ->required(),
+
+                                Forms\Components\TextInput::make('total_amount')
+                                    ->label('Total General')
+                                    ->disabled()
+                                    ->numeric()
+                                    ->prefix('L'),
                             ]),
 
                         Forms\Components\Textarea::make('notes')
                             ->label('Notas')
-                            ->columnSpan('full'),
-                    ])
+                            ->rows(3),
+                    ]),
             ]);
     }
 
-    public static function table(Tables\Table $table): Tables\Table
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('reference_number')
-                    ->label('Número de Referencia')
+                TextColumn::make('reference_number')
+                    ->label('Referencia')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('supplier.name')
+                TextColumn::make('supplier.name')
                     ->label('Proveedor')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('purchase_date')
-                    ->label('Fecha de Compra')
+                TextColumn::make('purchase_date')
+                    ->label('Fecha')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('total_amount')
+                    ->label('Total')
+                    ->formatStateUsing(fn ($state) => NumberFormatter::formatLempiras($state))
+                    ->sortable(),
+
+                TextColumn::make('status')
                     ->label('Estado')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
-                        'processing' => 'info',
                         'completed' => 'success',
                         'cancelled' => 'danger',
-                        default => 'secondary',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'pending' => 'Pendiente',
+                        'completed' => 'Completado',
+                        'cancelled' => 'Cancelado',
+                        default => $state,
                     }),
-
-                Tables\Columns\TextColumn::make('total_amount')
-                    ->label('Monto Total')
-                    ->money('MXN')
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('items_count')
-                    ->label('Productos')
-                    ->counts('items'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -203,5 +242,49 @@ class PurchaseResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return static::getNavigationBadge() ? 'warning' : null;
+    }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $totalAmount = 0;
+        if (isset($data['items'])) {
+            foreach ($data['items'] as &$item) {
+                $item['total_price'] = floatval($item['quantity']) * floatval($item['unit_price']);
+                $totalAmount += $item['total_price'];
+            }
+        }
+        $data['total_amount'] = $totalAmount;
+        return $data;
+    }
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        $purchase = static::getModel()::create([
+            'reference_number' => $data['reference_number'],
+            'supplier_id' => $data['supplier_id'],
+            'purchase_date' => $data['purchase_date'],
+            'status' => $data['status'],
+            'notes' => $data['notes'] ?? null,
+            'total_amount' => 0, // Inicialmente 0
+        ]);
+
+        // Crear los items y actualizar el total
+        if (isset($data['items'])) {
+            $totalAmount = 0;
+            foreach ($data['items'] as $item) {
+                $purchaseItem = $purchase->items()->create([
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'total_price' => $item['quantity'] * $item['unit_price'],
+                ]);
+                $totalAmount += $purchaseItem->total_price;
+            }
+
+            // Actualizar el total de la compra
+            $purchase->update(['total_amount' => $totalAmount]);
+        }
+
+        return $purchase;
     }
 }

@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Helpers\NumberFormatter;
 
 class ProductResource extends Resource
 {
@@ -71,13 +72,15 @@ class ProductResource extends Resource
                                     ->label('Precio de Compra')
                                     ->numeric()
                                     ->required()
-                                    ->prefix('$'),
+                                    ->prefix('L')
+                                    ->formatStateUsing(fn ($state) => $state ? NumberFormatter::formatLempiras($state) : null),
 
                                 Forms\Components\TextInput::make('sale_price')
                                     ->label('Precio de Venta')
                                     ->numeric()
                                     ->required()
-                                    ->prefix('$'),
+                                    ->prefix('L')
+                                    ->formatStateUsing(fn ($state) => $state ? NumberFormatter::formatLempiras($state) : null),
                             ]),
 
                         Forms\Components\Textarea::make('description')
@@ -134,12 +137,12 @@ class ProductResource extends Resource
 
                 Tables\Columns\TextColumn::make('purchase_price')
                     ->label('Precio de Compra')
-                    ->money('MXN')
+                    ->formatStateUsing(fn ($state) => NumberFormatter::formatLempiras($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('sale_price')
                     ->label('Precio de Venta')
-                    ->money('MXN')
+                    ->formatStateUsing(fn ($state) => NumberFormatter::formatLempiras($state))
                     ->sortable(),
             ])
             ->filters([

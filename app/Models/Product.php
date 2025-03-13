@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Helpers\NumberFormatter;
 
 class Product extends Model
 {
@@ -32,5 +33,13 @@ class Product extends Model
     public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function getFormattedPricesAttribute()
+    {
+        return [
+            'purchase' => NumberFormatter::formatLempiras($this->purchase_price),
+            'sale' => NumberFormatter::formatLempiras($this->sale_price)
+        ];
     }
 }
