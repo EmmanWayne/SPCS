@@ -5,13 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Inventory extends Model
+class PurchaseItem extends Model
 {
     protected $fillable = [
+        'purchase_id',
         'product_id',
         'quantity',
-        'minimum_stock',
+        'unit_price',
+        'total_price',
     ];
+
+    public function purchase(): BelongsTo
+    {
+        return $this->belongsTo(Purchase::class);
+    }
 
     public function product(): BelongsTo
     {

@@ -5,13 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Inventory extends Model
+class SaleItem extends Model
 {
     protected $fillable = [
+        'sale_id',
         'product_id',
         'quantity',
-        'minimum_stock',
+        'unit_price',
+        'total_price',
     ];
+
+    public function sale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class);
+    }
 
     public function product(): BelongsTo
     {
